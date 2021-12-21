@@ -44,8 +44,10 @@ export default {
     return this;
   },
   disable() {
-    http.ClientRequest.prototype.onSocket = origOnSocket;
-    origOnSocket = undefined;
+    if (origOnSocket) {
+      http.ClientRequest.prototype.onSocket = origOnSocket;
+      origOnSocket = undefined;
+    }
     return this;
   },
   on(eventName, callback) {
