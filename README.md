@@ -2,8 +2,6 @@
 
 > Library agnostic in-process recording of http(s) requests and responses
 
-# 🚧 Work In Progress - See [#1](https://github.com/gr2m/http-recorder/pull/1)
-
 ## Usage
 
 ```js
