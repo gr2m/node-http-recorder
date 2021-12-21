@@ -2,7 +2,11 @@
 
 > Library agnostic in-process recording of http(s) requests and responses
 
-# 🚧 Work In Progress - See [#1](https://github.com/gr2m/http-recorder/pull/1)
+## Install
+
+```
+npm install @gr2m/http-recorder
+```
 
 ## Usage
 
@@ -45,9 +49,48 @@ request.end();
 // }
 ```
 
+## API
+
+`HttpRecorder` is a singleton API.
+
+### `HttpRecorder.enable()`
+
+Hooks into the request life cycle and emits `record` events for each request sent through the `http` or `https` modules.
+
+### `HttpRecorder.disable()`
+
+Removes the hooks. No `record` events will be emitted.
+
+### `HttpRecorder.on("record", listener)`
+
+Subscribe to a `record` event. The `listener` callback is called with an options object
+
+- `options.request`: an [`http.ClientRequest` instance](https://nodejs.org/api/http.html#class-httpclientrequest)
+- `options.response`: an [`http.IncomingMessage` instance](https://nodejs.org/api/http.html#class-httpincomingmessage)
+- `options.requestBody`: An array of Buffer chunks representing the request body
+- `options.responseBody`: An array of Buffer chunks representing the response body
+
+### `HttpRecorder.off("record", listener)`
+
+Remove a `record` event listener.
+
+### `HttpRecorder.removeAllListeners()`
+
+Removes all `record` event listeners.
+
+## How it works
+
+When enabled, `HttpRecorder` hooks itself into [the `http.ClientRequest.prototype.onSocket` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_client.js#L778-L782) which is conveniently called synchronously in [the `http.ClientRequest` constructor](https://nodejs.org/api/http.html#class-httpclientrequest).
+
+When a request is intercepted, we hook into [the `request.write` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_outgoing.js#L701-L711) in order to clone the request body, subscribe to [the `response` event](https://nodejs.org/api/http.html#event-response), read out the response body, and then emit a `record` event with the `request`, `response`, `requestBody` and `responseBody` options.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBTING.md)
+
+## Credit
+
+The inspiration for hooking into `http.ClientRequest.prototype.onSocket` method comes from [Mitm.js](https://github.com/moll/node-mitm/#readme) - an http mocking library for TCP connections and http(s) requests.
 
 ## License
 
