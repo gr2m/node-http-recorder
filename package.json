@@ -1,0 +1,24 @@
+{
+  "name": "@gr2m/http-recorder",
+  "version": "0.0.0-development",
+  "type": "module",
+  "license": "MIT",
+  "description": "Library agnostic in-process recording of http(s) requests and responses",
+  "author": "Gregor Martynus (https://github.com/gr2m)",
+  "keywords": [
+    "http",
+    "http-recorder",
+    "http-recorder-module",
+    "tapping",
+    "record",
+    "mock",
+    "mocking"
+  ],
+  "scripts": {
+    "test": "c8 --100 uvu"
+  },
+  "devDependencies": {
+    "c8": "^7.10.0",
+    "uvu": "^0.5.2"
+  }
+}
