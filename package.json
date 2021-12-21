@@ -1,5 +1,8 @@
 {
   "name": "@gr2m/http-recorder",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.0.0-development",
   "type": "module",
   "license": "MIT",
