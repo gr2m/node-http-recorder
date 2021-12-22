@@ -15,10 +15,6 @@ test.before.each(() => {
   HttpRecorder.removeAllListeners();
 });
 
-test("smoke", () => {
-  assert.ok(HttpRecorder);
-});
-
 test("happy path", () => {
   return new Promise((reject) => {
     const server = http.createServer((_request, response) => {
@@ -358,63 +354,6 @@ test("https", () => {
     });
     request.end();
   });
-});
-
-test("Calling .enable() multiple times is a no-op", () => {
-  HttpRecorder.enable();
-  HttpRecorder.enable();
-});
-
-test("Does not emit record event when not enabled", () => {
-  return new Promise((resolve, reject) => {
-    HttpRecorder.on("record", () => {
-      server.close();
-      reject(new Error("Should not have been called"));
-    });
-
-    const server = http.createServer((_request, response) => {
-      response.end("ok");
-    });
-    const { port } = server.listen().address();
-    http
-      .request(`http://localhost:${port}`, (response) => {
-        response.on("end", () => {
-          server.close();
-          resolve();
-        });
-        response.resume();
-      })
-      .end();
-  });
-});
-
-test("Does not emit record event handler removed", () => {
-  return new Promise((resolve, reject) => {
-    HttpRecorder.enable();
-    const callback = () => {
-      server.close();
-      reject(new Error("Should not have been called"));
-    };
-    HttpRecorder.on("record", callback);
-    HttpRecorder.off("record", callback);
-
-    const server = http.createServer((_request, response) => {
-      response.end();
-    });
-    const { port } = server.listen().address();
-    http
-      .request(`http://localhost:${port}`, () => {
-        server.close(resolve);
-      })
-      .end();
-  });
-});
-
-test(".on() throws for unknown event", () => {
-  assert.throws(() => HttpRecorder.on("unknown", () => {}));
-});
-test(".off() throws for unknown event", () => {
-  assert.throws(() => HttpRecorder.off("unknown", () => {}));
 });
 
 test.run();
