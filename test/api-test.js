@@ -37,10 +37,7 @@ test("Does not emit record event when not enabled", () => {
     const { port } = server.listen().address();
     http
       .request(`http://localhost:${port}`, (response) => {
-        response.on("end", () => {
-          server.close();
-          resolve();
-        });
+        response.on("close", () => server.close(resolve));
         response.resume();
       })
       .end();
@@ -62,8 +59,8 @@ test("Does not emit record event handler removed", () => {
     });
     const { port } = server.listen().address();
     http
-      .request(`http://localhost:${port}`, () => {
-        server.close(resolve);
+      .request(`http://localhost:${port}`, (response) => {
+        response.on("close", () => server.close(resolve));
       })
       .end();
   });

@@ -1,4 +1,5 @@
 import fs from "node:fs";
+
 import http from "node:http";
 import https from "node:https";
 import path from "node:path";
@@ -207,17 +208,18 @@ test("delayed response read", () => {
     const { port } = server.listen().address();
 
     HttpRecorder.enable();
+    let retrievedRecordData = false;
     HttpRecorder.on("record", async ({ responseBody }) => {
       try {
         assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
-        assert.ok(retrievedData);
+        retrievedRecordData = true;
         resolve();
       } catch (error) {
         reject(error);
       }
     });
 
-    let retrievedData = false;
+    let retrievedResponseData = false;
     http.get(`http://localhost:${port}`, (response) => {
       response.pause();
       response.on("close", () => {
@@ -226,11 +228,20 @@ test("delayed response read", () => {
       setTimeout(() => {
         response.on("data", (data) => {
           assert.equal(data.toString(), "Hello!");
-          retrievedData = true;
+          retrievedResponseData = true;
         });
         response.resume();
-      }, 100);
+      }, 10);
     });
+
+    setTimeout(() => {
+      try {
+        assert.ok(retrievedRecordData);
+        assert.ok(retrievedResponseData);
+      } catch (error) {
+        reject(error);
+      }
+    }, 100);
   });
 });
 
@@ -242,11 +253,12 @@ test("response.end(text)", () => {
     const { port } = server.listen().address();
 
     HttpRecorder.enable();
-    let retrievedData = false;
+    let retrievedRecordData = false;
     HttpRecorder.on("record", async ({ responseBody }) => {
+      console.log("record");
       try {
         assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
-        retrievedData = true;
+        retrievedRecordData = true;
         server.close();
         resolve();
       } catch (error) {
@@ -254,13 +266,23 @@ test("response.end(text)", () => {
       }
     });
 
+    let retrievedResponseData = false;
     http.get(`http://localhost:${port}`, async (response) => {
       response.resume();
       for await (const chunk of response) {
         assert.equal(chunk.toString(), "Hello!");
+        retrievedResponseData = true;
       }
-      assert.ok(retrievedData);
     });
+
+    setTimeout(() => {
+      try {
+        assert.ok(retrievedRecordData);
+        assert.ok(retrievedResponseData);
+      } catch (error) {
+        reject(error);
+      }
+    }, 100);
   });
 });
 
@@ -282,9 +304,13 @@ test("response with content-encoding: deflate", () => {
     HttpRecorder.on("record", async ({ responseBody }) => {
       try {
         zlib.inflate(Buffer.concat(responseBody), (error, buffer) => {
-          assert.equal(buffer.toString(), "Hello!");
           server.close();
-          resolve();
+          try {
+            assert.equal(buffer.toString(), "Hello!");
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         });
       } catch (error) {
         reject(error);
