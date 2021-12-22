@@ -20,31 +20,6 @@ export default {
     http.ClientRequest.prototype.onSocket = function (socket) {
       const interceptedRequest = this;
 
-      let response;
-      const responseBodyChunks = [];
-      Object.defineProperty(interceptedRequest, "res", {
-        get() {
-          return response;
-        },
-        set(value) {
-          if (!value) {
-            response = value;
-            return;
-          }
-          if (value === response) return;
-
-          response = value;
-
-          const originalEmit = response.emit;
-          response.emit = function (event, ...args) {
-            if (event === "data") {
-              responseBodyChunks.push(args[0]);
-            }
-            return originalEmit.call(response, event, ...args);
-          };
-        },
-      });
-
       // read the request body as an array of Buffer chuncks
       // by hooking into the `request.{write,end}` methods.
       const requestBodyChunks = [];
@@ -66,6 +41,18 @@ export default {
       }
 
       interceptedRequest.on("response", async (response) => {
+        const responseBodyChunks = [];
+
+        // we patch `response.emit` in order to read out the response data
+        // without conusuming it. See https://github.com/gr2m/http-recorder/issues/18
+        const originalEmit = response.emit;
+        response.emit = function (event, ...args) {
+          if (event === "data") {
+            responseBodyChunks.push(args[0]);
+          }
+          return originalEmit.call(response, event, ...args);
+        };
+
         response.on("close", () => {
           // emit the `request` event with the request and response body
           emitter.emit("record", {
