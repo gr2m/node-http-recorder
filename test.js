@@ -74,6 +74,63 @@ test("happy path", () => {
   request.end();
 });
 
+test("Using request.end", () => {
+  const server = http.createServer(async (_request, response) => {
+    response.setHeader("x-my-response-header", 2);
+    response.end("World!");
+  });
+  const { port } = server.listen().address();
+
+  HttpRecorder.enable();
+  HttpRecorder.on(
+    "record",
+    async ({ request, response, requestBody, responseBody }) => {
+      const { method, protocol, host, path } = request;
+      const requestHeaders = { ...request.getHeaders() };
+
+      try {
+        assert.equal(method, "POST");
+        assert.equal(protocol, "http:");
+        assert.equal(host, "localhost");
+        assert.equal(path, "/path");
+        assert.equal(requestHeaders, {
+          host: "localhost:" + port,
+          "x-my-request-header": "1",
+        });
+        assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
+
+        const {
+          statusCode,
+          statusMessage,
+          headers: responseHeaders,
+        } = response;
+
+        assert.equal(statusCode, 200);
+        assert.equal(statusMessage, "OK");
+        assert.equal(responseHeaders["x-my-response-header"], "2");
+        assert.equal(Buffer.concat(responseBody).toString(), "World!");
+      } catch (error) {
+        if (error.code !== "ERR_ASSERTION") throw error;
+        console.log(error.details);
+        console.log("expected:", error.expects);
+        console.log("actual:", error.actual);
+      }
+    }
+  );
+
+  const request = http.request(
+    `http://localhost:${port}/path`,
+    {
+      method: "post",
+      headers: {
+        "x-my-request-header": "1",
+      },
+    },
+    () => server.close()
+  );
+  request.end("Hello!");
+});
+
 test("Calling .enable() multiple times is a no-op", () => {
   HttpRecorder.enable();
   HttpRecorder.enable();
