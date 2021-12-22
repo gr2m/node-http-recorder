@@ -84,6 +84,8 @@ test("happy path", () => {
       response.on("close", () => {
         server.close();
       });
+      // must read response
+      response.on("data", () => {});
     }
   );
   request.on("error", flowControl.reject);
@@ -103,16 +105,18 @@ test("emits 'record' event", async () => {
   HttpRecorder.enable();
   HttpRecorder.on("record", flowControl.resolve);
 
-  const request = http.request(`http://localhost:${port}`, () =>
-    server.close()
-  );
+  const request = http.request(`http://localhost:${port}`, (response) => {
+    response.on("close", () => server.close());
+    // must read response
+    response.on("data", () => {});
+  });
   request.on("error", flowControl.reject);
   request.end();
 
   return flowControl.promise;
 });
 
-test("request.write() with base64 encoding", async () => {
+test("request.write() with base64 encoding", () => {
   const flowControl = getFlowControl();
   const server = http.createServer(async (_request, response) => {
     response.end();
@@ -134,7 +138,11 @@ test("request.write() with base64 encoding", async () => {
     {
       method: "post",
     },
-    () => server.close()
+    (response) => {
+      response.on("close", () => server.close());
+      // must read response
+      response.on("data", () => {});
+    }
   );
   request.on("error", flowControl.reject);
   request.write(Buffer.from("Hello!").toString("base64"), "base64");
@@ -167,7 +175,11 @@ test("request.write(data, callback)", async () => {
     {
       method: "post",
     },
-    () => server.close()
+    (response) => {
+      response.on("close", () => server.close());
+      // must read response
+      response.on("data", () => {});
+    }
   );
   request.on("error", recordDataControl.reject);
   request.write("Hello!", (error) => {
@@ -202,7 +214,11 @@ test("request.end(text)", () => {
     {
       method: "post",
     },
-    () => server.close()
+    (response) => {
+      response.on("close", () => server.close());
+      // must read response
+      response.on("data", () => {});
+    }
   );
   request.on("error", flowControl.reject);
   request.end("Hello!");
@@ -210,8 +226,9 @@ test("request.end(text)", () => {
   return flowControl.promise;
 });
 
-test("request.end(callback)", () => {
-  const flowControl = getFlowControl();
+test("request.end(callback)", async () => {
+  const recordControl = getFlowControl();
+  const callbackControl = getFlowControl();
   const server = http.createServer(async (_request, response) => {
     response.end();
   });
@@ -221,9 +238,9 @@ test("request.end(callback)", () => {
   HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
     try {
       assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
-      flowControl.resolve();
+      recordControl.resolve();
     } catch (error) {
-      flowControl.reject(error);
+      recordControl.reject(error);
     }
   });
 
@@ -236,25 +253,21 @@ test("request.end(callback)", () => {
       response.on("close", () => {
         server.close();
       });
-      try {
-        assert.ok(callbackCalled);
-      } catch (error) {
-        flowControl.reject(error);
-      }
+      // must read response
+      response.on("data", () => {});
     }
   );
-  let callbackCalled = false;
   request.write("Hello!");
-  request.end(() => {
-    callbackCalled = true;
-  });
+  request.end(callbackControl.resolve);
 
-  return flowControl.promise;
+  await callbackControl.promise;
+  await recordControl.promise;
 });
 
 test("delayed response read", async () => {
   const recordDataControl = getFlowControl();
   const responseDataControl = getFlowControl();
+  const timeoutControl = getFlowControl();
 
   const server = http.createServer(async (_request, response) => {
     response.write("Hello!");
@@ -276,11 +289,13 @@ test("delayed response read", async () => {
 
   let retrievedResponseData = false;
   http.get(`http://localhost:${port}`, (response) => {
-    response.pause();
-    response.on("close", () => {
-      server.close();
-    });
     setTimeout(() => {
+      response.on("close", () => {
+        clearTimeout(timeout);
+        timeoutControl.resolve();
+        server.close();
+      });
+
       response.on("data", (data) => {
         try {
           assert.equal(data.toString(), "Hello!");
@@ -290,10 +305,15 @@ test("delayed response read", async () => {
           responseDataControl.reject(error);
         }
       });
-      response.resume();
     }, 10);
   });
 
+  const timeout = setTimeout(() => {
+    server.close();
+    timeoutControl.reject(new Error("Timeout"));
+  }, 1000);
+
+  await timeoutControl.promise;
   await recordDataControl.promise;
   await responseDataControl.promise;
 
@@ -316,7 +336,6 @@ test("response.end(text)", async () => {
     try {
       assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
       retrievedRecordData = true;
-      server.close();
       recordDataControl.resolve();
     } catch (error) {
       recordDataControl.reject(error);
@@ -325,8 +344,8 @@ test("response.end(text)", async () => {
 
   let retrievedResponseData = false;
   http.get(`http://localhost:${port}`, async (response) => {
+    response.on("close", () => server.close());
     try {
-      response.resume();
       for await (const chunk of response) {
         assert.equal(chunk.toString(), "Hello!");
         retrievedResponseData = true;
@@ -362,7 +381,6 @@ test("response with content-encoding: deflate", () => {
   HttpRecorder.on("record", async ({ responseBody }) => {
     try {
       zlib.inflate(Buffer.concat(responseBody), (error, buffer) => {
-        server.close();
         try {
           assert.equal(buffer.toString(), "Hello!");
           flowControl.resolve();
@@ -375,7 +393,11 @@ test("response with content-encoding: deflate", () => {
     }
   });
 
-  http.get(`http://localhost:${port}`);
+  http.get(`http://localhost:${port}`, (response) => {
+    response.on("close", () => server.close());
+    // must read response
+    response.on("data", () => {});
+  });
 
   return flowControl.promise;
 });
@@ -394,14 +416,17 @@ test("response with redirect", () => {
   HttpRecorder.on("record", async ({ response }) => {
     try {
       assert.equal(response.headers.location, "https://example.com");
-      server.close();
       flowControl.resolve();
     } catch (error) {
       flowControl.reject(error);
     }
   });
 
-  http.get(`http://localhost:${port}`);
+  http.get(`http://localhost:${port}`, (response) => {
+    response.on("close", () => server.close());
+    // must read response
+    response.on("data", () => {});
+  });
 
   return flowControl.promise;
 });
@@ -426,7 +451,6 @@ test("https", () => {
   HttpRecorder.on("record", async ({ responseBody }) => {
     try {
       assert.equal(Buffer.concat(responseBody).toString(), "Hello, World!");
-      server.close();
       flowControl.resolve();
     } catch (error) {
       flowControl.reject(error);
@@ -436,9 +460,13 @@ test("https", () => {
   const emitWarning = process.emitWarning;
   process.emitWarning = () => {};
   process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
-  const request = https.request(`https://localhost:${port}`, () => {
+  const request = https.request(`https://localhost:${port}`, (response) => {
     process.emitWarning = emitWarning;
+    response.on("close", () => server.close());
+    // must read response
+    response.on("data", () => {});
   });
+  request.on("error", flowControl.reject);
   request.end();
 
   return flowControl.promise;

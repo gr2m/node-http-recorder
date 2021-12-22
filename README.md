@@ -84,7 +84,13 @@ Removes all `record` event listeners.
 
 When enabled, `HttpRecorder` hooks itself into [the `http.ClientRequest.prototype.onSocket` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_client.js#L778-L782) which is conveniently called synchronously in [the `http.ClientRequest` constructor](https://nodejs.org/api/http.html#class-httpclientrequest).
 
-When a request is intercepted, we hook into [the `request.write` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_outgoing.js#L701-L711) in order to clone the request body, subscribe to [the `response` event](https://nodejs.org/api/http.html#event-response), read out the response body, and then emit a `record` event with the `request`, `response`, `requestBody` and `responseBody` options.
+When a request is intercepted, we
+
+1. hook into [the `request.write` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_outgoing.js#L701-L711) in order to clone the request body
+2. subscribe to [the `response` event](https://nodejs.org/api/http.html#event-response)
+3. hook into the `response.emit` method in order to read the response body without consuming it
+
+and then emit a `record` event with the `request`, `response`, `requestBody` and `responseBody` options.
 
 ## Contributing
 

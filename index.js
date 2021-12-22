@@ -41,11 +41,17 @@ export default {
       }
 
       interceptedRequest.on("response", async (response) => {
-        // read the response body as an array of Buffer chuncks
         const responseBodyChunks = [];
-        response.on("data", (chunk) => {
-          responseBodyChunks.push(Buffer.from(chunk));
-        });
+
+        // we patch `response.emit` in order to read out the response data
+        // without conusuming it. See https://github.com/gr2m/http-recorder/issues/18
+        const originalEmit = response.emit;
+        response.emit = function (event, ...args) {
+          if (event === "data") {
+            responseBodyChunks.push(args[0]);
+          }
+          return originalEmit.call(response, event, ...args);
+        };
 
         response.on("close", () => {
           // emit the `request` event with the request and response body
