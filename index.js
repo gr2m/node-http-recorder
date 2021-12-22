@@ -20,6 +20,31 @@ export default {
     http.ClientRequest.prototype.onSocket = function (socket) {
       const interceptedRequest = this;
 
+      let response;
+      const responseBodyChunks = [];
+      Object.defineProperty(interceptedRequest, "res", {
+        get() {
+          return response;
+        },
+        set(value) {
+          if (!value) {
+            response = value;
+            return;
+          }
+          if (value === response) return;
+
+          response = value;
+
+          const originalEmit = response.emit;
+          response.emit = function (event, ...args) {
+            if (event === "data") {
+              responseBodyChunks.push(args[0]);
+            }
+            return originalEmit.call(response, event, ...args);
+          };
+        },
+      });
+
       // read the request body as an array of Buffer chuncks
       // by hooking into the `request.{write,end}` methods.
       const requestBodyChunks = [];
@@ -41,12 +66,6 @@ export default {
       }
 
       interceptedRequest.on("response", async (response) => {
-        // read the response body as an array of Buffer chuncks
-        const responseBodyChunks = [];
-        response.on("data", (chunk) => {
-          responseBodyChunks.push(Buffer.from(chunk));
-        });
-
         response.on("close", () => {
           // emit the `request` event with the request and response body
           emitter.emit("record", {
