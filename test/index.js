@@ -1,9 +1,13 @@
+import fs from "node:fs";
 import http from "node:http";
+import https from "node:https";
+import path from "node:path";
+import url from "node:url";
 
 import { test } from "uvu";
 import * as assert from "uvu/assert";
 
-import HttpRecorder from "./index.js";
+import HttpRecorder from "../index.js";
 
 test.before.each(() => {
   HttpRecorder.disable();
@@ -194,6 +198,42 @@ test("request.end(callback)", () => {
     request.end(() => {
       callbackCalled = true;
     });
+  });
+});
+
+test("https", () => {
+  return new Promise((resolve, reject) => {
+    const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+    const server = https.createServer(
+      {
+        key: fs.readFileSync(path.resolve(__dirname, "key.pem")),
+        cert: fs.readFileSync(path.resolve(__dirname, "cert.pem")),
+      },
+      function (req, res) {
+        res.writeHead(200);
+        res.end("Hello, World!");
+      }
+    );
+    const { port } = server.listen().address();
+
+    HttpRecorder.enable();
+    HttpRecorder.on("record", async ({ responseBody }) => {
+      try {
+        assert.equal(Buffer.concat(responseBody).toString(), "Hello, World!");
+        server.close();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    const emitWarning = process.emitWarning;
+    process.emitWarning = () => {};
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+    const request = https.request(`https://localhost:${port}`, () => {
+      process.emitWarning = emitWarning;
+    });
+    request.end();
   });
 });
 
