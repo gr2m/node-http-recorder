@@ -39,16 +39,18 @@ export default {
       interceptedRequest.on("response", async (response) => {
         // read the response body as an array of Buffer chuncks
         const responseBodyChunks = [];
-        for await (const chunk of response) {
+        response.on("data", (chunk) => {
           responseBodyChunks.push(Buffer.from(chunk));
-        }
+        });
 
-        // emit the `request` event with the request and response body
-        emitter.emit("record", {
-          request: interceptedRequest,
-          requestBody: requestBodyChunks,
-          response,
-          responseBody: responseBodyChunks,
+        response.on("close", () => {
+          // emit the `request` event with the request and response body
+          emitter.emit("record", {
+            request: interceptedRequest,
+            requestBody: requestBodyChunks,
+            response,
+            responseBody: responseBodyChunks,
+          });
         });
       });
 

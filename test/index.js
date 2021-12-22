@@ -201,6 +201,72 @@ test("request.end(callback)", () => {
   });
 });
 
+test("delayed response read", () => {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(async (_request, response) => {
+      response.write("Hello!");
+      response.end();
+    });
+    const { port } = server.listen().address();
+
+    HttpRecorder.enable();
+    HttpRecorder.on("record", async ({ responseBody }) => {
+      try {
+        assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
+        assert.ok(retrievedData);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    let retrievedData = false;
+    http.get(`http://localhost:${port}`, (response) => {
+      response.pause();
+      response.on("close", () => {
+        server.close();
+      });
+      setTimeout(() => {
+        response.on("data", (data) => {
+          assert.equal(data.toString(), "Hello!");
+          retrievedData = true;
+        });
+        response.resume();
+      }, 100);
+    });
+  });
+});
+
+test("response.end(text)", () => {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(async (_request, response) => {
+      response.end("Hello!");
+    });
+    const { port } = server.listen().address();
+
+    HttpRecorder.enable();
+    let retrievedData = false;
+    HttpRecorder.on("record", async ({ responseBody }) => {
+      try {
+        assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
+        retrievedData = true;
+        server.close();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    http.get(`http://localhost:${port}`, async (response) => {
+      response.resume();
+      for await (const chunk of response) {
+        assert.equal(chunk.toString(), "Hello!");
+      }
+      assert.ok(retrievedData);
+    });
+  });
+});
+
 test("https", () => {
   return new Promise((resolve, reject) => {
     const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
