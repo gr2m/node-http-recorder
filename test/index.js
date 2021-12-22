@@ -299,6 +299,31 @@ test("response with content-encoding: deflate", () => {
   });
 });
 
+test("response with redirect", () => {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((request, response) => {
+      response.writeHead(302, {
+        Location: "https://example.com",
+      });
+      response.end();
+    });
+    const { port } = server.listen().address();
+
+    HttpRecorder.enable();
+    HttpRecorder.on("record", async ({ response }) => {
+      try {
+        assert.equal(response.headers.location, "https://example.com");
+        server.close();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    http.get(`http://localhost:${port}`);
+  });
+});
+
 test("https", () => {
   return new Promise((resolve, reject) => {
     const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
