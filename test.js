@@ -15,124 +15,155 @@ test("smoke", () => {
 });
 
 test("happy path", () => {
-  const server = http.createServer((_request, response) => {
-    response.setHeader("x-my-response-header", 2);
-    response.end("World!");
-  });
-  const { port } = server.listen().address();
+  return new Promise((reject) => {
+    const server = http.createServer((_request, response) => {
+      response.setHeader("x-my-response-header", 2);
+      response.end("World!");
+    });
+    const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on(
-    "record",
-    async ({ request, response, requestBody, responseBody }) => {
-      const { method, protocol, host, path } = request;
-      const requestHeaders = { ...request.getHeaders() };
+    HttpRecorder.enable();
+    HttpRecorder.on(
+      "record",
+      async ({ request, response, requestBody, responseBody }) => {
+        const { method, protocol, host, path } = request;
+        const requestHeaders = { ...request.getHeaders() };
 
-      try {
-        assert.equal(method, "POST");
-        assert.equal(protocol, "http:");
-        assert.equal(host, "localhost");
-        assert.equal(path, "/path");
-        assert.equal(requestHeaders, {
-          host: "localhost:" + port,
-          "x-my-request-header": "1",
-        });
-        assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
+        try {
+          assert.equal(method, "POST");
+          assert.equal(protocol, "http:");
+          assert.equal(host, "localhost");
+          assert.equal(path, "/path");
+          assert.equal(requestHeaders, {
+            host: "localhost:" + port,
+            "x-my-request-header": "1",
+          });
+          assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
 
-        const {
-          statusCode,
-          statusMessage,
-          headers: responseHeaders,
-        } = response;
+          const {
+            statusCode,
+            statusMessage,
+            headers: responseHeaders,
+          } = response;
 
-        assert.equal(statusCode, 200);
-        assert.equal(statusMessage, "OK");
-        assert.equal(responseHeaders["x-my-response-header"], "2");
-        assert.equal(Buffer.concat(responseBody).toString(), "World!");
-      } catch (error) {
-        if (error.code !== "ERR_ASSERTION") throw error;
-        console.log(error.details);
-        console.log("expected:", error.expects);
-        console.log("actual:", error.actual);
+          assert.equal(statusCode, 200);
+          assert.equal(statusMessage, "OK");
+          assert.equal(responseHeaders["x-my-response-header"], "2");
+          assert.equal(Buffer.concat(responseBody).toString(), "World!");
+
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
       }
-    }
-  );
+    );
 
-  const request = http.request(
-    `http://localhost:${port}/path`,
-    {
-      method: "post",
-      headers: {
-        "x-my-request-header": "1",
+    const request = http.request(
+      `http://localhost:${port}/path`,
+      {
+        method: "post",
+        headers: {
+          "x-my-request-header": "1",
+        },
       },
-    },
-    () => {
-      server.close();
-    }
-  );
-  request.write("Hello!");
-  request.end();
+      (response) => {
+        response.on("error", reject);
+        response.on("close", () => {
+          server.close();
+        });
+      }
+    );
+    request.on("error", reject);
+    request.write("Hello!");
+    request.end();
+  });
+});
+
+test("emits 'record' event", async () => {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(async (_request, response) => {
+      response.end();
+    });
+    const { port } = server.listen().address();
+
+    HttpRecorder.enable();
+    HttpRecorder.on("record", resolve);
+
+    const request = http.request(`http://localhost:${port}`, () =>
+      server.close()
+    );
+    request.on("error", reject);
+    request.end();
+  });
 });
 
 test("request.end(text)", () => {
-  const server = http.createServer(async (_request, response) => {
-    response.end();
-  });
-  const { port } = server.listen().address();
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(async (_request, response) => {
+      response.end();
+    });
+    const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
-    try {
-      assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
-    } catch (error) {
-      if (error.code !== "ERR_ASSERTION") throw error;
-      console.log(error.details);
-      console.log("expected:", error.expects);
-      console.log("actual:", error.actual);
-    }
-  });
+    HttpRecorder.enable();
+    HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
+      try {
+        assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
 
-  const request = http.request(
-    `http://localhost:${port}/path`,
-    {
-      method: "post",
-    },
-    () => server.close()
-  );
-  request.end("Hello!");
+    const request = http.request(
+      `http://localhost:${port}/path`,
+      {
+        method: "post",
+      },
+      () => server.close()
+    );
+    request.on("error", reject);
+    request.end("Hello!");
+  });
 });
 
 test("request.end(callback)", () => {
-  const server = http.createServer(async (_request, response) => {
-    response.end();
-  });
-  const { port } = server.listen().address();
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(async (_request, response) => {
+      response.end();
+    });
+    const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
-    try {
-      assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
-    } catch (error) {
-      if (error.code !== "ERR_ASSERTION") throw error;
-      console.log(error.details);
-      console.log("expected:", error.expects);
-      console.log("actual:", error.actual);
-    }
-  });
+    HttpRecorder.enable();
+    HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
+      try {
+        assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
 
-  const request = http.request(
-    `http://localhost:${port}/path`,
-    {
-      method: "post",
-    },
-    () => {
-      assert.ok(callbackCalled);
-      server.close();
-    }
-  );
-  let callbackCalled = false;
-  request.end(() => {
-    callbackCalled = true;
+    const request = http.request(
+      `http://localhost:${port}/path`,
+      {
+        method: "post",
+      },
+      (response) => {
+        response.on("close", () => {
+          server.close();
+        });
+        try {
+          assert.ok(callbackCalled);
+        } catch (error) {
+          reject(error);
+        }
+      }
+    );
+    let callbackCalled = false;
+    request.write("Hello!");
+    request.end(() => {
+      callbackCalled = true;
+    });
   });
 });
 
@@ -142,40 +173,48 @@ test("Calling .enable() multiple times is a no-op", () => {
 });
 
 test("Does not emit record event when not enabled", () => {
-  HttpRecorder.on("record", () => {
-    server.close();
-    throw new Error("Should not have been called");
-  });
-
-  const server = http.createServer((_request, response) => {
-    response.end();
-  });
-  const { port } = server.listen().address();
-  http
-    .request(`http://localhost:${port}`, () => {
+  return new Promise((resolve, reject) => {
+    HttpRecorder.on("record", () => {
       server.close();
-    })
-    .end();
+      reject(new Error("Should not have been called"));
+    });
+
+    const server = http.createServer((_request, response) => {
+      response.end("ok");
+    });
+    const { port } = server.listen().address();
+    http
+      .request(`http://localhost:${port}`, (response) => {
+        response.on("end", () => {
+          server.close();
+          resolve();
+        });
+        response.resume();
+      })
+      .end();
+  });
 });
 
 test("Does not emit record event handler removed", () => {
-  HttpRecorder.enable();
-  const callback = () => {
-    server.close();
-    throw new Error("Should not have been called");
-  };
-  HttpRecorder.on("record", callback);
-  HttpRecorder.off("record", callback);
-
-  const server = http.createServer((_request, response) => {
-    response.end();
-  });
-  const { port } = server.listen().address();
-  http
-    .request(`http://localhost:${port}`, () => {
+  return new Promise((resolve, reject) => {
+    HttpRecorder.enable();
+    const callback = () => {
       server.close();
-    })
-    .end();
+      reject(new Error("Should not have been called"));
+    };
+    HttpRecorder.on("record", callback);
+    HttpRecorder.off("record", callback);
+
+    const server = http.createServer((_request, response) => {
+      response.end();
+    });
+    const { port } = server.listen().address();
+    http
+      .request(`http://localhost:${port}`, () => {
+        server.close(resolve);
+      })
+      .end();
+  });
 });
 
 test(".on() throws for unknown event", () => {
