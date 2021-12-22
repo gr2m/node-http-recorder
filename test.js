@@ -97,6 +97,36 @@ test("emits 'record' event", async () => {
   });
 });
 
+test("request.write() with base64 encoding", async () => {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer(async (_request, response) => {
+      response.end();
+    });
+    const { port } = server.listen().address();
+
+    HttpRecorder.enable();
+    HttpRecorder.on("record", async ({ requestBody }) => {
+      try {
+        assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    const request = http.request(
+      `http://localhost:${port}/path`,
+      {
+        method: "post",
+      },
+      () => server.close()
+    );
+    request.on("error", reject);
+    request.write(Buffer.from("Hello!").toString("base64"), "base64");
+    request.end();
+  });
+});
+
 test("request.end(text)", () => {
   return new Promise((resolve, reject) => {
     const server = http.createServer(async (_request, response) => {
