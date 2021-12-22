@@ -431,6 +431,44 @@ test("response with redirect", () => {
   return flowControl.promise;
 });
 
+test("response.read()", async () => {
+  const recordControl = getFlowControl();
+  const requestControl = getFlowControl();
+
+  const server = http.createServer((request, response) => {
+    response.end("Hello!");
+  });
+  const { port } = server.listen().address();
+
+  HttpRecorder.enable();
+  HttpRecorder.on("record", async ({ responseBody }) => {
+    try {
+      assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
+      recordControl.resolve();
+    } catch (error) {
+      recordControl.reject(error);
+    }
+  });
+
+  http
+    .get(`http://localhost:${port}`, (response) => {
+      response.on("close", () => {
+        server.close();
+        requestControl.resolve();
+      });
+      response.on("error", requestControl.reject);
+      // must read response
+      response.on("readable", () => {
+        const data = response.read();
+        assert.equal(data.toString(), "Hello!");
+      });
+    })
+    .on("error", requestControl.reject);
+
+  await recordControl.promise;
+  await requestControl.promise;
+});
+
 test("https", () => {
   const flowControl = getFlowControl();
 
