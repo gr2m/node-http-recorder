@@ -255,6 +255,7 @@ test("request.end(callback)", () => {
 test("delayed response read", async () => {
   const recordDataControl = getFlowControl();
   const responseDataControl = getFlowControl();
+  const timeoutControl = getFlowControl();
 
   const server = http.createServer(async (_request, response) => {
     response.write("Hello!");
@@ -276,11 +277,13 @@ test("delayed response read", async () => {
 
   let retrievedResponseData = false;
   http.get(`http://localhost:${port}`, (response) => {
-    response.on("close", () => {
-      server.close();
-    });
-
     setTimeout(() => {
+      response.on("close", () => {
+        clearTimeout(timeout);
+        timeoutControl.resolve();
+        server.close();
+      });
+
       response.on("data", (data) => {
         try {
           assert.equal(data.toString(), "Hello!");
@@ -293,6 +296,12 @@ test("delayed response read", async () => {
     }, 10);
   });
 
+  const timeout = setTimeout(() => {
+    server.close();
+    timeoutControl.reject(new Error("Timeout"));
+  }, 100);
+
+  await timeoutControl.promise;
   await recordDataControl.promise;
   await responseDataControl.promise;
 
