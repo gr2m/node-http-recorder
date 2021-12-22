@@ -44,7 +44,8 @@ test("Does not emit record event when not enabled", () => {
   http
     .request(`http://localhost:${port}`, (response) => {
       response.on("close", () => server.close(flowControl.resolve));
-      response.resume();
+      // must read data
+      response.on("data", () => {});
     })
     .on("error", flowControl.reject)
     .end();
@@ -55,7 +56,7 @@ test("Does not emit record event when not enabled", () => {
 test("Does not emit record event handler removed", () => {
   const flowControl = getFlowControl();
 
-  HttpRecorder.enable();
+  // HttpRecorder.enable();
   const callback = () => {
     server.close();
     reject(new Error("Should not have been called"));
@@ -70,6 +71,8 @@ test("Does not emit record event handler removed", () => {
   http
     .request(`http://localhost:${port}`, (response) => {
       response.on("close", () => server.close(flowControl.resolve));
+      // must read data
+      response.on("data", () => {});
     })
     .on("error", flowControl.reject)
     .end();
