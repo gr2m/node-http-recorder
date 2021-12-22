@@ -3,7 +3,7 @@ import http from "node:http";
 import { test } from "uvu";
 import * as assert from "uvu/assert";
 
-import HttpRecorder from "./index.js";
+import HttpRecorder from "../index.js";
 
 test.before.each(() => {
   HttpRecorder.disable();
