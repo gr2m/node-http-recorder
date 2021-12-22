@@ -21,13 +21,15 @@ export default {
       const interceptedRequest = this;
 
       // read the request body as an array of Buffer chuncks
-      // by hooking into the `request.write` method.
+      // by hooking into the `request.{write,end}` methods.
       const requestBodyChunks = [];
-      const originalRequestWrite = interceptedRequest.write;
-      interceptedRequest.write = function (chunk) {
-        requestBodyChunks.push(Buffer.from(chunk));
-        return originalRequestWrite.call(this, chunk);
-      };
+      for (const method of ["write", "end"]) {
+        const originalMethod = interceptedRequest[method];
+        interceptedRequest[method] = function (chunk) {
+          if (chunk) requestBodyChunks.push(Buffer.from(chunk));
+          return originalMethod.call(this, chunk);
+        };
+      }
 
       interceptedRequest.on("response", async (response) => {
         // read the response body as an array of Buffer chuncks
