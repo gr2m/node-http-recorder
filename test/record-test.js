@@ -143,6 +143,43 @@ test("request.write() with base64 encoding", async () => {
   return flowControl.promise;
 });
 
+test("request.write(data, callback)", async () => {
+  const recordDataControl = getFlowControl();
+  const writeCallbackControl = getFlowControl();
+
+  const server = http.createServer(async (_request, response) => {
+    response.end();
+  });
+  const { port } = server.listen().address();
+
+  HttpRecorder.enable();
+  HttpRecorder.on("record", async ({ requestBody }) => {
+    try {
+      assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
+      recordDataControl.resolve();
+    } catch (error) {
+      recordDataControl.reject(error);
+    }
+  });
+
+  const request = http.request(
+    `http://localhost:${port}/path`,
+    {
+      method: "post",
+    },
+    () => server.close()
+  );
+  request.on("error", recordDataControl.reject);
+  request.write("Hello!", (error) => {
+    if (error) return writeCallbackControl.reject(error);
+    writeCallbackControl.resolve();
+  });
+  request.end();
+
+  await recordDataControl.promise;
+  await writeCallbackControl.promise;
+});
+
 test("request.end(text)", () => {
   const flowControl = getFlowControl();
   const server = http.createServer(async (_request, response) => {
