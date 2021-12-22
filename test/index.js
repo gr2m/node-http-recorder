@@ -3,6 +3,7 @@ import http from "node:http";
 import https from "node:https";
 import path from "node:path";
 import url from "node:url";
+import zlib from "node:zlib";
 
 import { test } from "uvu";
 import * as assert from "uvu/assert";
@@ -264,6 +265,37 @@ test("response.end(text)", () => {
       }
       assert.ok(retrievedData);
     });
+  });
+});
+
+test("response with content-encoding: deflate", () => {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((request, response) => {
+      response.writeHead(200, {
+        "Content-Encoding": "deflate",
+        "Content-Type": "text/plain; charset=utf-8",
+      });
+
+      zlib.deflate(Buffer.from("Hello!"), (error, buffer) => {
+        response.end(buffer);
+      });
+    });
+    const { port } = server.listen().address();
+
+    HttpRecorder.enable();
+    HttpRecorder.on("record", async ({ responseBody }) => {
+      try {
+        zlib.inflate(Buffer.concat(responseBody), (error, buffer) => {
+          assert.equal(buffer.toString(), "Hello!");
+          server.close();
+          resolve();
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+
+    http.get(`http://localhost:${port}`);
   });
 });
 
