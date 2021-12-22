@@ -102,6 +102,40 @@ test("request.end(text)", () => {
   request.end("Hello!");
 });
 
+test("request.end(callback)", () => {
+  const server = http.createServer(async (_request, response) => {
+    response.end();
+  });
+  const { port } = server.listen().address();
+
+  HttpRecorder.enable();
+  HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
+    try {
+      assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
+    } catch (error) {
+      if (error.code !== "ERR_ASSERTION") throw error;
+      console.log(error.details);
+      console.log("expected:", error.expects);
+      console.log("actual:", error.actual);
+    }
+  });
+
+  const request = http.request(
+    `http://localhost:${port}/path`,
+    {
+      method: "post",
+    },
+    () => {
+      assert.ok(callbackCalled);
+      server.close();
+    }
+  );
+  let callbackCalled = false;
+  request.end(() => {
+    callbackCalled = true;
+  });
+});
+
 test("Calling .enable() multiple times is a no-op", () => {
   HttpRecorder.enable();
   HttpRecorder.enable();
