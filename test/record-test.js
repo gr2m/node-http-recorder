@@ -276,10 +276,10 @@ test("delayed response read", async () => {
 
   let retrievedResponseData = false;
   http.get(`http://localhost:${port}`, (response) => {
-    response.pause();
     response.on("close", () => {
       server.close();
     });
+
     setTimeout(() => {
       response.on("data", (data) => {
         try {
@@ -290,7 +290,6 @@ test("delayed response read", async () => {
           responseDataControl.reject(error);
         }
       });
-      response.resume();
     }, 10);
   });
 
