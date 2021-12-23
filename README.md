@@ -15,7 +15,7 @@ I created `@gr2m/http-recorder` as a utility library that can be used as a build
 
 `@gr2m/http-recorder` plays well with [Mitm.js](https://github.com/moll/node-mitm) (or its [esm version](https://github.com/gr2m/mitm-esm)), which is another lowe-level library but focused on mocking http(s) and net requests.
 
-Note that the requests & responses you receive from the `"record"` response is as-is. If the request or response was encoded then it's up to you to decode it if you need to.
+Note that the requests & responses you receive from the `"record"` event is as-is. If the request or response was encoded then it's up to you to decode it if you need to.
 
 ## Install
 
