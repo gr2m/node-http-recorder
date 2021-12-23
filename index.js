@@ -10,7 +10,6 @@ let isPatched = false;
 export default {
   enable() {
     if (isEnabled) return;
-
     isEnabled = true;
 
     if (isPatched) return;
@@ -81,17 +80,15 @@ export default {
     return this;
   },
   on(eventName, callback) {
-    if (eventName !== "record") {
+    if (eventName !== "record")
       throw new Error("Only 'record' events are supported");
-    }
 
     emitter.on("record", callback);
     return this;
   },
   off(eventName, callback) {
-    if (eventName !== "record") {
+    if (eventName !== "record")
       throw new Error("Only 'record' events are supported");
-    }
 
     emitter.off("record", callback);
     return this;
