@@ -20,6 +20,9 @@
   "repository": "github:gr2m/http-recorder",
   "exports": "./index.js",
   "types": "./index.d.ts",
+  "workspaces": [
+    "examples/*"
+  ],
   "scripts": {
     "test": "npm run test:code && npm run test:tsc && npm run test:tsd && npm run lint",
     "test:code": "c8 --100 uvu",

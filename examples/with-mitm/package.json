@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "mitm-esm": "^2.1.0"
+  }
+}

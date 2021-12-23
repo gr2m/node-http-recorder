@@ -4,6 +4,19 @@
 
 [![Test](https://github.com/gr2m/http-recorder/actions/workflows/test.yml/badge.svg)](https://github.com/gr2m/http-recorder/actions/workflows/test.yml)
 
+## Features
+
+- unopiniated, minimal library, as low-level as possible
+- to record http(s) requests and responses within the same process, without starting a server or proxying
+
+## Goals & trade-offs
+
+I created `@gr2m/http-recorder` as a utility library that can be used as a building stone for more opiniated libraries. I'm one of the maintainers of [nock](https://github.com/nock/nock/) and hope to use this library to replace what `nock` is currently doing with much more code.
+
+`@gr2m/http-recorder` plays well with [Mitm.js](https://github.com/moll/node-mitm) (or its [esm version](https://github.com/gr2m/mitm-esm)), which is another lowe-level library but focused on mocking http(s) and net requests.
+
+Note that the requests & responses you receive from the `"record"` response is as-is. If the request or response was encoded then it's up to you to decode it if you need to.
+
 ## Install
 
 ```
@@ -50,6 +63,8 @@ request.end();
 //   ...
 // }
 ```
+
+See more [examples](examples)
 
 ## API
 
