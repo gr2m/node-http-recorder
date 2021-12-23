@@ -81,11 +81,21 @@ test("Does not emit record event handler removed", () => {
 });
 
 test(".on() throws for unknown event", () => {
-  assert.throws(() => httpRecorder.on("unknown", () => {}));
+  try {
+    httpRecorder.on("unknown", () => {});
+    assert.not.ok("should throw");
+  } catch (error) {
+    assert.ok(error);
+  }
 });
 
 test(".off() throws for unknown event", () => {
-  assert.throws(() => httpRecorder.off("unknown", () => {}));
+  try {
+    httpRecorder.off("unknown", () => {});
+    assert.not.ok("should throw");
+  } catch (error) {
+    assert.ok(error);
+  }
 });
 
 test(".disable() does not revert other patches", async () => {
