@@ -109,7 +109,7 @@ and then emit a `record` event with the `request`, `response`, `requestBody` and
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBTING.md)
+See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## Credit
 
