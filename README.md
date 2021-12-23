@@ -14,10 +14,10 @@ npm install @gr2m/http-recorder
 
 ```js
 import http from "node:http";
-import HttpRecorder from "@gr2m/http-recorder";
+import httpRecorder from "@gr2m/http-recorder";
 
-HttpRecorder.enable();
-HttpRecorder.on(
+httpRecorder.enable();
+httpRecorder.on(
   "record",
   async ({ request, response, requestBody, responseBody }) => {
     const { method, protocol, host, path } = request;
@@ -53,17 +53,17 @@ request.end();
 
 ## API
 
-`HttpRecorder` is a singleton API.
+`httpRecorder` is a singleton API.
 
-### `HttpRecorder.enable()`
+### `httpRecorder.enable()`
 
 Hooks into the request life cycle and emits `record` events for each request sent through the `http` or `https` modules.
 
-### `HttpRecorder.disable()`
+### `httpRecorder.disable()`
 
 Removes the hooks. No `record` events will be emitted.
 
-### `HttpRecorder.on("record", listener)`
+### `httpRecorder.on("record", listener)`
 
 Subscribe to a `record` event. The `listener` callback is called with an options object
 
@@ -72,17 +72,17 @@ Subscribe to a `record` event. The `listener` callback is called with an options
 - `options.requestBody`: An array of Buffer chunks representing the request body
 - `options.responseBody`: An array of Buffer chunks representing the response body
 
-### `HttpRecorder.off("record", listener)`
+### `httpRecorder.off("record", listener)`
 
 Remove a `record` event listener.
 
-### `HttpRecorder.removeAllListeners()`
+### `httpRecorder.removeAllListeners()`
 
 Removes all `record` event listeners.
 
 ## How it works
 
-When enabled, `HttpRecorder` hooks itself into [the `http.ClientRequest.prototype.onSocket` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_client.js#L778-L782) which is conveniently called synchronously in [the `http.ClientRequest` constructor](https://nodejs.org/api/http.html#class-httpclientrequest).
+When enabled, `httpRecorder` hooks itself into [the `http.ClientRequest.prototype.onSocket` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_client.js#L778-L782) which is conveniently called synchronously in [the `http.ClientRequest` constructor](https://nodejs.org/api/http.html#class-httpclientrequest).
 
 When a request is intercepted, we
 

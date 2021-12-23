@@ -1,14 +1,14 @@
 import http from "http";
 
-declare const HttpRecorder: {
-  enable: () => typeof HttpRecorder;
-  disable: () => typeof HttpRecorder;
-  on: (event: "record", listener: RecordHandler) => typeof HttpRecorder;
-  off: (event: "record", listener: RecordHandler) => typeof HttpRecorder;
-  removeAllListeners: () => typeof HttpRecorder;
+declare const httpRecorder: {
+  enable: () => typeof httpRecorder;
+  disable: () => typeof httpRecorder;
+  on: (event: "record", listener: RecordHandler) => typeof httpRecorder;
+  off: (event: "record", listener: RecordHandler) => typeof httpRecorder;
+  removeAllListeners: () => typeof httpRecorder;
 };
 
-export default HttpRecorder;
+export default httpRecorder;
 
 export interface RecordHandler {
   (options: RecordHandlerOptions): void | Promise<void>;

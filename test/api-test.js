@@ -3,7 +3,7 @@ import http from "node:http";
 import { test } from "uvu";
 import * as assert from "uvu/assert";
 
-import HttpRecorder from "../index.js";
+import httpRecorder from "../index.js";
 
 function getFlowControl() {
   const control = {};
@@ -16,23 +16,23 @@ function getFlowControl() {
 }
 
 test.before.each(() => {
-  HttpRecorder.disable();
-  HttpRecorder.removeAllListeners();
+  httpRecorder.disable();
+  httpRecorder.removeAllListeners();
 });
 
 test("smoke", () => {
-  assert.ok(HttpRecorder);
+  assert.ok(httpRecorder);
 });
 
 test("Calling .enable() multiple times is a no-op", () => {
-  HttpRecorder.enable();
-  HttpRecorder.enable();
+  httpRecorder.enable();
+  httpRecorder.enable();
 });
 
 test("Does not emit record event when not enabled", () => {
   const flowControl = getFlowControl();
 
-  HttpRecorder.on("record", () => {
+  httpRecorder.on("record", () => {
     server.close();
     flowControl.reject(new Error("Should not have been called"));
   });
@@ -56,13 +56,13 @@ test("Does not emit record event when not enabled", () => {
 test("Does not emit record event handler removed", () => {
   const flowControl = getFlowControl();
 
-  HttpRecorder.enable();
+  httpRecorder.enable();
   const callback = () => {
     server.close();
     reject(new Error("Should not have been called"));
   };
-  HttpRecorder.on("record", callback);
-  HttpRecorder.off("record", callback);
+  httpRecorder.on("record", callback);
+  httpRecorder.off("record", callback);
 
   const server = http.createServer((_request, response) => {
     response.end();
@@ -81,25 +81,25 @@ test("Does not emit record event handler removed", () => {
 });
 
 test(".on() throws for unknown event", () => {
-  assert.throws(() => HttpRecorder.on("unknown", () => {}));
+  assert.throws(() => httpRecorder.on("unknown", () => {}));
 });
 
 test(".off() throws for unknown event", () => {
-  assert.throws(() => HttpRecorder.off("unknown", () => {}));
+  assert.throws(() => httpRecorder.off("unknown", () => {}));
 });
 
 test(".disable() does not revert other patches", async () => {
   const hookControl = getFlowControl();
   const requestControl = getFlowControl();
 
-  HttpRecorder.enable();
+  httpRecorder.enable();
 
   const origOnSocket = http.ClientRequest.prototype.onSocket;
   http.ClientRequest.prototype.onSocket = function (socket) {
     hookControl.resolve();
     return origOnSocket.call(this, socket);
   };
-  HttpRecorder.disable();
+  httpRecorder.disable();
 
   const server = http.createServer((_request, response) => {
     response.end("ok");

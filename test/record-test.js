@@ -9,7 +9,7 @@ import zlib from "node:zlib";
 import { test } from "uvu";
 import * as assert from "uvu/assert";
 
-import HttpRecorder from "../index.js";
+import httpRecorder from "../index.js";
 
 function getFlowControl() {
   const control = {};
@@ -22,8 +22,8 @@ function getFlowControl() {
 }
 
 test.before.each(() => {
-  HttpRecorder.disable();
-  HttpRecorder.removeAllListeners();
+  httpRecorder.disable();
+  httpRecorder.removeAllListeners();
 });
 
 test("happy path", () => {
@@ -35,8 +35,8 @@ test("happy path", () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on(
+  httpRecorder.enable();
+  httpRecorder.on(
     "record",
     async ({ request, response, requestBody, responseBody }) => {
       const { method, protocol, host, path } = request;
@@ -102,8 +102,8 @@ test("emits 'record' event", async () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", flowControl.resolve);
+  httpRecorder.enable();
+  httpRecorder.on("record", flowControl.resolve);
 
   const request = http.request(`http://localhost:${port}`, (response) => {
     response.on("close", () => server.close());
@@ -123,8 +123,8 @@ test("request.write() with base64 encoding", () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ requestBody }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ requestBody }) => {
     try {
       assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
       flowControl.resolve();
@@ -160,8 +160,8 @@ test("request.write(data, callback)", async () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ requestBody }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ requestBody }) => {
     try {
       assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
       recordDataControl.resolve();
@@ -199,8 +199,8 @@ test("request.end(text)", () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ requestBody, responseBody }) => {
     try {
       assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
       flowControl.resolve();
@@ -234,8 +234,8 @@ test("request.end(callback)", async () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ requestBody, responseBody }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ requestBody, responseBody }) => {
     try {
       assert.equal(Buffer.concat(requestBody).toString(), "Hello!");
       recordControl.resolve();
@@ -275,9 +275,9 @@ test("delayed response read", async () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
+  httpRecorder.enable();
   let retrievedRecordData = false;
-  HttpRecorder.on("record", async ({ responseBody }) => {
+  httpRecorder.on("record", async ({ responseBody }) => {
     try {
       assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
       retrievedRecordData = true;
@@ -330,9 +330,9 @@ test("response.end(text)", async () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
+  httpRecorder.enable();
   let retrievedRecordData = false;
-  HttpRecorder.on("record", async ({ responseBody }) => {
+  httpRecorder.on("record", async ({ responseBody }) => {
     try {
       assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
       retrievedRecordData = true;
@@ -377,8 +377,8 @@ test("response with content-encoding: deflate", () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ responseBody }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ responseBody }) => {
     try {
       zlib.inflate(Buffer.concat(responseBody), (error, buffer) => {
         try {
@@ -412,8 +412,8 @@ test("response with redirect", () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ response }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ response }) => {
     try {
       assert.equal(response.headers.location, "https://example.com");
       flowControl.resolve();
@@ -440,8 +440,8 @@ test("response.read()", async () => {
   });
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ responseBody }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ responseBody }) => {
     try {
       assert.equal(Buffer.concat(responseBody).toString(), "Hello!");
       recordControl.resolve();
@@ -485,8 +485,8 @@ test("https", () => {
   );
   const { port } = server.listen().address();
 
-  HttpRecorder.enable();
-  HttpRecorder.on("record", async ({ responseBody }) => {
+  httpRecorder.enable();
+  httpRecorder.on("record", async ({ responseBody }) => {
     try {
       assert.equal(Buffer.concat(responseBody).toString(), "Hello, World!");
       flowControl.resolve();

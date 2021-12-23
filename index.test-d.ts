@@ -1,25 +1,25 @@
 import http from "node:http";
 
 import { expectType } from "tsd";
-import HttpRecorder from "./index.js";
+import httpRecorder from "./index.js";
 
 export function smokeTest() {
-  expectType<typeof HttpRecorder>(HttpRecorder);
+  expectType<typeof httpRecorder>(httpRecorder);
 }
 
 export function API() {
-  expectType<typeof HttpRecorder>(HttpRecorder.enable());
-  expectType<typeof HttpRecorder>(HttpRecorder.disable());
-  expectType<typeof HttpRecorder>(HttpRecorder.on("record", () => {}));
-  expectType<typeof HttpRecorder>(HttpRecorder.off("record", () => {}));
-  expectType<typeof HttpRecorder>(HttpRecorder.removeAllListeners());
+  expectType<typeof httpRecorder>(httpRecorder.enable());
+  expectType<typeof httpRecorder>(httpRecorder.disable());
+  expectType<typeof httpRecorder>(httpRecorder.on("record", () => {}));
+  expectType<typeof httpRecorder>(httpRecorder.off("record", () => {}));
+  expectType<typeof httpRecorder>(httpRecorder.removeAllListeners());
 
   // @ts-expect-error - only "record" is supported
-  HttpRecorder.on("not-record", () => {});
+  httpRecorder.on("not-record", () => {});
 }
 
 export function recordHandler() {
-  HttpRecorder.on("record", (options) => {
+  httpRecorder.on("record", (options) => {
     expectType<http.ClientRequest>(options.request);
     expectType<http.IncomingMessage>(options.response);
     expectType<Buffer[]>(options.requestBody);
