@@ -17,7 +17,7 @@ import http from "node:http";
 import httpRecorder from "@gr2m/http-recorder";
 
 httpRecorder.start();
-httpRecorder.on(
+httpRecorder.addListener(
   "record",
   async ({ request, response, requestBody, responseBody }) => {
     const { method, protocol, host, path } = request;
@@ -63,7 +63,7 @@ Hooks into the request life cycle and emits `record` events for each request sen
 
 Removes the hooks. No `record` events will be emitted.
 
-### `httpRecorder.on("record", listener)`
+### `httpRecorder.addListener("record", listener)`
 
 Subscribe to a `record` event. The `listener` callback is called with an options object
 
@@ -72,7 +72,7 @@ Subscribe to a `record` event. The `listener` callback is called with an options
 - `options.requestBody`: An array of Buffer chunks representing the request body
 - `options.responseBody`: An array of Buffer chunks representing the response body
 
-### `httpRecorder.off("record", listener)`
+### `httpRecorder.removeListener("record", listener)`
 
 Remove a `record` event listener.
 

@@ -32,7 +32,7 @@ test("Calling .start() multiple times is a no-op", () => {
 test("Does not emit record event when not started", () => {
   const flowControl = getFlowControl();
 
-  httpRecorder.on("record", () => {
+  httpRecorder.addListener("record", () => {
     server.close();
     flowControl.reject(new Error("Should not have been called"));
   });
@@ -61,8 +61,8 @@ test("Does not emit record event handler removed", () => {
     server.close();
     reject(new Error("Should not have been called"));
   };
-  httpRecorder.on("record", callback);
-  httpRecorder.off("record", callback);
+  httpRecorder.addListener("record", callback);
+  httpRecorder.removeListener("record", callback);
 
   const server = http.createServer((_request, response) => {
     response.end();
