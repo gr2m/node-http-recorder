@@ -1,8 +1,8 @@
 import http from "http";
 
 declare const httpRecorder: {
-  enable: () => typeof httpRecorder;
-  disable: () => typeof httpRecorder;
+  start: () => typeof httpRecorder;
+  stop: () => typeof httpRecorder;
   on: (event: "record", listener: RecordHandler) => typeof httpRecorder;
   off: (event: "record", listener: RecordHandler) => typeof httpRecorder;
   removeAllListeners: () => typeof httpRecorder;

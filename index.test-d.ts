@@ -8,8 +8,8 @@ export function smokeTest() {
 }
 
 export function API() {
-  expectType<typeof httpRecorder>(httpRecorder.enable());
-  expectType<typeof httpRecorder>(httpRecorder.disable());
+  expectType<typeof httpRecorder>(httpRecorder.start());
+  expectType<typeof httpRecorder>(httpRecorder.stop());
   expectType<typeof httpRecorder>(httpRecorder.on("record", () => {}));
   expectType<typeof httpRecorder>(httpRecorder.off("record", () => {}));
   expectType<typeof httpRecorder>(httpRecorder.removeAllListeners());
