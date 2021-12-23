@@ -34,7 +34,7 @@ test("Does not emit record event when not enabled", () => {
 
   HttpRecorder.on("record", () => {
     server.close();
-    reject(new Error("Should not have been called"));
+    flowControl.reject(new Error("Should not have been called"));
   });
 
   const server = http.createServer((_request, response) => {
@@ -83,8 +83,47 @@ test("Does not emit record event handler removed", () => {
 test(".on() throws for unknown event", () => {
   assert.throws(() => HttpRecorder.on("unknown", () => {}));
 });
+
 test(".off() throws for unknown event", () => {
   assert.throws(() => HttpRecorder.off("unknown", () => {}));
+});
+
+test(".disable() does not revert other patches", async () => {
+  const hookControl = getFlowControl();
+  const requestControl = getFlowControl();
+
+  HttpRecorder.enable();
+
+  const origOnSocket = http.ClientRequest.prototype.onSocket;
+  http.ClientRequest.prototype.onSocket = function (socket) {
+    hookControl.resolve();
+    return origOnSocket.call(this, socket);
+  };
+  HttpRecorder.disable();
+
+  const server = http.createServer((_request, response) => {
+    response.end("ok");
+  });
+  const { port } = server.listen().address();
+  http
+    .request(`http://localhost:${port}`, (response) => {
+      response.on("close", () => server.close(requestControl.resolve));
+      response.on("error", requestControl.reject);
+      // must read data
+      response.on("data", () => {});
+    })
+    .on("error", requestControl.reject)
+    .end();
+
+  const timeout = setTimeout(
+    () => hookControl.reject(new Error("Timeout")),
+    1000
+  );
+
+  await requestControl.promise;
+  await hookControl.promise;
+
+  clearTimeout(timeout);
 });
 
 test.run();
