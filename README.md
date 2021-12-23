@@ -19,7 +19,7 @@ import httpRecorder from "@gr2m/http-recorder";
 httpRecorder.start();
 httpRecorder.addListener(
   "record",
-  async ({ request, response, requestBody, responseBody }) => {
+  ({ request, response, requestBody, responseBody }) => {
     const { method, protocol, host, path } = request;
     const requestHeaders = request.getHeaders();
 
