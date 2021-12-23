@@ -1,10 +1,16 @@
 import http from "http";
 
 declare const httpRecorder: {
-  enable: () => typeof httpRecorder;
-  disable: () => typeof httpRecorder;
-  on: (event: "record", listener: RecordHandler) => typeof httpRecorder;
-  off: (event: "record", listener: RecordHandler) => typeof httpRecorder;
+  start: () => typeof httpRecorder;
+  stop: () => typeof httpRecorder;
+  addListener: (
+    event: "record",
+    listener: RecordHandler
+  ) => typeof httpRecorder;
+  removeListener: (
+    event: "record",
+    listener: RecordHandler
+  ) => typeof httpRecorder;
   removeAllListeners: () => typeof httpRecorder;
 };
 

@@ -8,18 +8,20 @@ export function smokeTest() {
 }
 
 export function API() {
-  expectType<typeof httpRecorder>(httpRecorder.enable());
-  expectType<typeof httpRecorder>(httpRecorder.disable());
-  expectType<typeof httpRecorder>(httpRecorder.on("record", () => {}));
-  expectType<typeof httpRecorder>(httpRecorder.off("record", () => {}));
+  expectType<typeof httpRecorder>(httpRecorder.start());
+  expectType<typeof httpRecorder>(httpRecorder.stop());
+  expectType<typeof httpRecorder>(httpRecorder.addListener("record", () => {}));
+  expectType<typeof httpRecorder>(
+    httpRecorder.removeListener("record", () => {})
+  );
   expectType<typeof httpRecorder>(httpRecorder.removeAllListeners());
 
   // @ts-expect-error - only "record" is supported
-  httpRecorder.on("not-record", () => {});
+  httpRecorder.addListener("not-record", () => {});
 }
 
 export function recordHandler() {
-  httpRecorder.on("record", (options) => {
+  httpRecorder.addListener("record", (options) => {
     expectType<http.ClientRequest>(options.request);
     expectType<http.IncomingMessage>(options.response);
     expectType<Buffer[]>(options.requestBody);

@@ -16,7 +16,7 @@ function getFlowControl() {
 }
 
 test.before.each(() => {
-  httpRecorder.disable();
+  httpRecorder.stop();
   httpRecorder.removeAllListeners();
 });
 
@@ -24,15 +24,15 @@ test("smoke", () => {
   assert.ok(httpRecorder);
 });
 
-test("Calling .enable() multiple times is a no-op", () => {
-  httpRecorder.enable();
-  httpRecorder.enable();
+test("Calling .start() multiple times is a no-op", () => {
+  httpRecorder.start();
+  httpRecorder.start();
 });
 
-test("Does not emit record event when not enabled", () => {
+test("Does not emit record event when not started", () => {
   const flowControl = getFlowControl();
 
-  httpRecorder.on("record", () => {
+  httpRecorder.addListener("record", () => {
     server.close();
     flowControl.reject(new Error("Should not have been called"));
   });
@@ -56,13 +56,13 @@ test("Does not emit record event when not enabled", () => {
 test("Does not emit record event handler removed", () => {
   const flowControl = getFlowControl();
 
-  httpRecorder.enable();
+  httpRecorder.start();
   const callback = () => {
     server.close();
     reject(new Error("Should not have been called"));
   };
-  httpRecorder.on("record", callback);
-  httpRecorder.off("record", callback);
+  httpRecorder.addListener("record", callback);
+  httpRecorder.removeListener("record", callback);
 
   const server = http.createServer((_request, response) => {
     response.end();
@@ -98,18 +98,18 @@ test(".off() throws for unknown event", () => {
   }
 });
 
-test(".disable() does not revert other patches", async () => {
+test(".stop() does not revert other patches", async () => {
   const hookControl = getFlowControl();
   const requestControl = getFlowControl();
 
-  httpRecorder.enable();
+  httpRecorder.start();
 
   const origOnSocket = http.ClientRequest.prototype.onSocket;
   http.ClientRequest.prototype.onSocket = function (socket) {
     hookControl.resolve();
     return origOnSocket.call(this, socket);
   };
-  httpRecorder.disable();
+  httpRecorder.stop();
 
   const server = http.createServer((_request, response) => {
     response.end("ok");

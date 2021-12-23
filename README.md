@@ -16,8 +16,8 @@ npm install @gr2m/http-recorder
 import http from "node:http";
 import httpRecorder from "@gr2m/http-recorder";
 
-httpRecorder.enable();
-httpRecorder.on(
+httpRecorder.start();
+httpRecorder.addListener(
   "record",
   async ({ request, response, requestBody, responseBody }) => {
     const { method, protocol, host, path } = request;
@@ -55,15 +55,15 @@ request.end();
 
 `httpRecorder` is a singleton API.
 
-### `httpRecorder.enable()`
+### `httpRecorder.start()`
 
 Hooks into the request life cycle and emits `record` events for each request sent through the `http` or `https` modules.
 
-### `httpRecorder.disable()`
+### `httpRecorder.stop()`
 
 Removes the hooks. No `record` events will be emitted.
 
-### `httpRecorder.on("record", listener)`
+### `httpRecorder.addListener("record", listener)`
 
 Subscribe to a `record` event. The `listener` callback is called with an options object
 
@@ -72,7 +72,7 @@ Subscribe to a `record` event. The `listener` callback is called with an options
 - `options.requestBody`: An array of Buffer chunks representing the request body
 - `options.responseBody`: An array of Buffer chunks representing the response body
 
-### `httpRecorder.off("record", listener)`
+### `httpRecorder.removeListener("record", listener)`
 
 Remove a `record` event listener.
 
@@ -82,13 +82,13 @@ Removes all `record` event listeners.
 
 ## How it works
 
-When enabled, `httpRecorder` hooks itself into [the `http.ClientRequest.prototype.onSocket` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_client.js#L778-L782) which is conveniently called synchronously in [the `http.ClientRequest` constructor](https://nodejs.org/api/http.html#class-httpclientrequest).
+Once started, `httpRecorder` hooks itself into [the `http.ClientRequest.prototype.onSocket` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_client.js#L778-L782) which is conveniently called synchronously in [the `http.ClientRequest` constructor](https://nodejs.org/api/http.html#class-httpclientrequest).
 
 When a request is intercepted, we
 
-1. hook into [the `request.write` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_outgoing.js#L701-L711) in order to clone the request body
+1. hook into [the `request.write` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_outgoing.js#L701-L711) and [the `request.end` method](https://github.com/nodejs/node/blob/cf6996458b82ec0bdf97209bce380e1483c349fb/lib/_http_outgoing.js#L833-L906) in order to clone the request body
 2. subscribe to [the `response` event](https://nodejs.org/api/http.html#event-response)
-3. hook into the `response.emit` method in order to read the response body without consuming it
+3. hook into the `response.emit` method in order to clone the response body without consuming it
 
 and then emit a `record` event with the `request`, `response`, `requestBody` and `responseBody` options.
 
