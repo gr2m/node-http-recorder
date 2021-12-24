@@ -2,6 +2,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "mitm-esm": "^2.1.0"
+    "mitm-esm": "^2.1.1"
+  },
+  "scripts": {
+    "test": "c8 uvu"
   }
 }
