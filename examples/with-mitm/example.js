@@ -10,7 +10,9 @@ setupHttpMocking();
 setupHttpRecording();
 
 // send your request here
-const request = http.request("http://httpbin.org/post", { method: "POST" });
+const request = http.request("http://httpbin.org/deflate", {
+  method: "GET",
+});
 request.on("response", (response) =>
   response.on("data", (data) => console.log(data.toString()))
 );
@@ -86,7 +88,9 @@ function setupHttpRecording() {
         },
       };
 
-      fs.mkdirSync(dirname(methodAndPathToFixturesPath(method, path)));
+      fs.mkdirSync(dirname(methodAndPathToFixturesPath(method, path))).catch(
+        () => {}
+      );
       fs.writeFileSync(
         methodAndPathToFixturesPath(method, path),
         JSON.stringify(fixture, null, 2)
