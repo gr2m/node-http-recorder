@@ -24,8 +24,8 @@ test("Record first request, replay 2nd request", async () => {
     "timeout"
   );
 
-  // delete recorded fixtures
-  await fs.rm(fixturesPath, { recursive: true });
+  // delete fixtures directory if present
+  await fs.rm(fixturesPath, { recursive: true }).catch(() => {});
 
   // capture logs and resolve promisses based on messages
   const logs = [];
