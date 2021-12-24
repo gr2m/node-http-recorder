@@ -1,4 +1,5 @@
-import fs from "node:fs";
+import fs from "node:fs/promises";
+import { existsSync } from "node:fs";
 import http from "node:http";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
@@ -10,8 +11,8 @@ setupHttpMocking();
 setupHttpRecording();
 
 // send your request here
-const request = http.request("http://httpbin.org/deflate", {
-  method: "GET",
+const request = http.request("http://httpbin.org/post", {
+  method: "POST",
 });
 request.on("response", (response) =>
   response.on("data", (data) => console.log(data.toString()))
@@ -22,21 +23,21 @@ request.end("Hello, world!");
 // from fixtures if there is one matching the request
 function setupHttpMocking() {
   const mitm = new Mitm();
-  mitm.on("connect", function (socket, options) {
+  mitm.on("connect", (socket, options) => {
     const { method, pathname } = options;
 
-    if (fs.existsSync(methodAndPathToFixturesPath(method, pathname))) {
+    if (existsSync(methodAndPathToFixturesPath(method, pathname))) {
       console.log(`[Mitm] fixture found for ${method} ${pathname}`);
     } else {
       console.log(`[Mitm] recording fixture for ${method} ${pathname}`);
       socket.bypass();
     }
   });
-  mitm.on("request", function (request, response) {
+  mitm.on("request", async (request, response) => {
     const { method, url } = request;
 
     const fixture = JSON.parse(
-      fs.readFileSync(methodAndPathToFixturesPath(method, url), "utf-8")
+      await fs.readFile(methodAndPathToFixturesPath(method, url), "utf-8")
     );
 
     response.writeHead(
@@ -88,10 +89,12 @@ function setupHttpRecording() {
         },
       };
 
-      fs.mkdirSync(dirname(methodAndPathToFixturesPath(method, path))).catch(
-        () => {}
-      );
-      fs.writeFileSync(
+      await fs
+        .mkdir(dirname(methodAndPathToFixturesPath(method, path)), {
+          recursive: true,
+        })
+        .catch(() => {});
+      await fs.writeFile(
         methodAndPathToFixturesPath(method, path),
         JSON.stringify(fixture, null, 2)
       );
