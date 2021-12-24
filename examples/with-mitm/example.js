@@ -11,7 +11,9 @@ setupHttpRecording();
 
 // send your request here
 const request = http.request("http://httpbin.org/post", { method: "POST" });
-request.on("response", (response) => response.pipe(process.stdout));
+request.on("response", (response) =>
+  response.on("data", (data) => console.log(data.toString()))
+);
 request.end("Hello, world!");
 
 // Setup Mitm.js to intercept requests and replay responses
@@ -59,7 +61,7 @@ function setupHttpRecording() {
       const { method, protocol, host, path } = request;
       const requestHeaders = request.getHeaders();
 
-      console.log("[recorder] Writing fixture for %s %s", method, path);
+      console.log(`[recorder] Writing fixture for ${method} ${path}`);
 
       const { statusCode, statusMessage, headers: responseHeaders } = response;
 
