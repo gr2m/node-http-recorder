@@ -107,6 +107,11 @@ When a request is intercepted, we
 
 and then emit a `record` event with the `request`, `response`, `requestBody` and `responseBody` options.
 
+## See also
+
+- [`@gr2m/net-interceptor`](https://github.com/gr2m/node-net-interceptor) - Intercept outgoing network TCP/TLS connections
+- [`@gr2m/http-interceptor`](https://github.com/gr2m/node-http-interceptor) - Intercept and mock outgoing http/https requests
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md)
