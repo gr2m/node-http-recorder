@@ -12,7 +12,7 @@ Node.js 14 or higher is required. Install it from https://nodejs.org/en/. [GitHu
 1. Fork this repository and clone it to your local machine. Using `gh` you can do this
 
    ```
-   gh repo fork gr2m/http-recorder
+   gh repo fork gr2m/node-http-recorder
    ```
 
 2. After cloning and changing into the `http-recorder` directory, install dependencies and run the tests
@@ -30,7 +30,7 @@ Few notes
 
 ## Issues before pull requests
 
-Unless the change is trivial such as a type, please [open an issue first](https://github.com/gr2m/http-recorder/issues/new) before starting a pull request for a bug fix or a new feature.
+Unless the change is trivial such as a type, please [open an issue first](https://github.com/gr2m/node-http-recorder/issues/new) before starting a pull request for a bug fix or a new feature.
 
 After you cloned your fork, create a new branch and implement the changes in them. To start a pull request, you can use the `gh` CLI
 

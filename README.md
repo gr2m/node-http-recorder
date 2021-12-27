@@ -2,7 +2,7 @@
 
 > Library agnostic in-process recording of http(s) requests and responses
 
-[![Test](https://github.com/gr2m/http-recorder/actions/workflows/test.yml/badge.svg)](https://github.com/gr2m/http-recorder/actions/workflows/test.yml)
+[![Test](https://github.com/gr2m/node-http-recorder/actions/workflows/test.yml/badge.svg)](https://github.com/gr2m/node-http-recorder/actions/workflows/test.yml)
 
 ## Features
 

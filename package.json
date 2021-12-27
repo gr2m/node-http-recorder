@@ -17,7 +17,7 @@
     "mock",
     "mocking"
   ],
-  "repository": "github:gr2m/http-recorder",
+  "repository": "github:gr2m/node-http-recorder",
   "exports": "./index.js",
   "types": "./index.d.ts",
   "workspaces": [
