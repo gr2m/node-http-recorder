@@ -41,7 +41,7 @@
     "p-defer": "^4.0.0",
     "prettier": "^2.5.1",
     "tsd": "^0.25.0",
-    "typescript": "^4.5.4",
+    "typescript": "^5.0.0",
     "uvu": "^0.5.2"
   },
   "release": {
