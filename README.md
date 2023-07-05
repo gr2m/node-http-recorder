@@ -44,7 +44,7 @@ httpRecorder.addListener(
     console.log(`\n< %s %s`, statusCode, statusMessage);
     console.log(`< %j`, responseHeaders);
     console.log(Buffer.concat(responseBody).toString());
-  }
+  },
 );
 
 const request = http.request("http://httpbin.org/post", { method: "post" });
