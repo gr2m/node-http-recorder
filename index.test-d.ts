@@ -12,7 +12,7 @@ export function API() {
   expectType<typeof httpRecorder>(httpRecorder.stop());
   expectType<typeof httpRecorder>(httpRecorder.addListener("record", () => {}));
   expectType<typeof httpRecorder>(
-    httpRecorder.removeListener("record", () => {})
+    httpRecorder.removeListener("record", () => {}),
   );
   expectType<typeof httpRecorder>(httpRecorder.removeAllListeners());
 
