@@ -35,7 +35,7 @@
     "postcoverage": "open-cli coverage/index.html"
   },
   "devDependencies": {
-    "@types/node": "^18.0.0",
+    "@types/node": "^20.0.0",
     "c8": "^8.0.0",
     "open-cli": "^7.0.1",
     "p-defer": "^4.0.0",
